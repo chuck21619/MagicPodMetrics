@@ -36,21 +36,22 @@ stays the same.
 
 ## Log format it expects
 
-Blocks of rows, one block per game:
+One row per game, with a header row and a column per player:
 
-| A | B | C | D |
-|---|---|---|---|
-| date | 3/7/2026 | *(optional note)* | |
-| winner | dustin | *(2nd winner if shared)* | |
-| players | chuck | dustin | pk |
-| commander | deck | deck | deck |
-| *(blank)* | | *partner / 2nd line* | |
+| Date | Winner | Note | chuck | dustin | pk |
+|---|---|---|---|---|---|
+| 3/7/2026 | dustin | | ikra shadiqi | leonardo + april o'neal | roxanne |
+| 7/21/2026 | chuck, pk | | mad | mad | mad |
+| 10/25/2026 | | did not finish | scryfall random | sefris precon | -1/-1 precon |
 
-- `DNF`, `did not finish`, `no one`, or blank in the winner row = unfinished game
-  (left out of win rates).
-- A deck named `mad` is counted as a "Mad" game; a deck with `precon` in its
-  name counts as a precon.
-- More players work: add columns to the `players` row.
+- **Winner**: one name, or several separated by commas for a shared win.
+  Blank (or `dnf`, `no one`) = no winner; those games are left out of win rates.
+- **Player columns**: the deck that player used. Blank = they sat out.
+  `unknown` = they played but the deck wasn't recorded.
+- Partners or a second commander go in the same cell, joined with `+`.
+- A deck named `mad` counts as a "Mad" game; a deck with `precon` in its name
+  counts as a precon.
+- New player: add a column on the right (the form does this automatically).
 
 ## Config
 

@@ -38,46 +38,30 @@ function fetchSheetRows() {
 }
 
 // ---- Parsing ------------------------------------------------------------
-// The log is a series of blocks:
-//   date      | 3/7/2026 | (optional note)
-//   winner    | dustin   | (second winner if shared)
-//   players   | chuck    | dustin | pk
-//   commander | deck     | deck   | deck
-//   (blank)   |          | partner/extra line for a deck
+// The log is one row per game, with a column per player holding their deck:
+//   Date      | Winner    | Note | chuck | dustin | pk | ...
+//   3/7/2026  | dustin    |      | deck  | deck   | deck
+//   7/21/2026 | chuck, pk |      | mad   | mad    | mad
+// Winner: comma-separated names, or blank for no winner. Blank deck = sat out.
 function parseGames(rows) {
-  const games = [];
-  let cur = null;
-  let lastKey = null;
-  for (const row of rows) {
-    const key = (row[0] || "").toLowerCase();
-    const vals = row.slice(1);
-    if (key === "date") {
-      cur = { date: parseDate(vals[0]), dateText: vals[0], note: vals.slice(1).filter(Boolean).join(" "), winners: [], players: [], decks: [] };
-      games.push(cur);
-    } else if (!cur) {
-      continue;
-    } else if (key === "winner" || key === "winners") {
-      cur.winners = vals.map(norm).filter((v) => !NO_WINNER.has(v));
-    } else if (key === "players") {
-      cur.players = vals.map(norm).filter(Boolean);
-    } else if (key === "commander" || key === "commanders") {
-      cur.decks = vals.map((v) => v.toLowerCase());
-    } else if (key === "" && lastKey === "commander" && vals.some(Boolean)) {
-      vals.forEach((v, i) => { if (v) cur.decks[i] = cur.decks[i] ? `${cur.decks[i]} + ${v.toLowerCase()}` : v.toLowerCase(); });
-      continue; // keep lastKey as commander for further continuation lines
-    }
-    if (key) lastKey = key === "commanders" ? "commander" : key;
+  if (norm(rows[0]?.[0]) !== "date" || norm(rows[0]?.[1]) !== "winner") {
+    throw new Error("The log's first row should be Date | Winner | Note | players…");
   }
-  return games
-    .filter((g) => g.players.length)
-    .map((g, i) => {
-      g.index = i + 1;
-      g.winners = g.winners.filter((w) => g.players.includes(w));
+  const players = rows[0].slice(3).map(norm);
+  return rows.slice(1)
+    .filter((r) => (r[0] || "").trim())
+    .map((r) => {
+      const g = { date: parseDate(r[0]), dateText: r[0], note: r[2] || "", players: [], deckOf: {} };
+      players.forEach((p, i) => {
+        const deck = (r[3 + i] || "").trim().toLowerCase();
+        if (p && deck) { g.players.push(p); g.deckOf[p] = deck; }
+      });
+      g.winners = (r[1] || "").split(/,|&/).map(norm).filter((w) => !NO_WINNER.has(w) && g.players.includes(w));
       g.finished = g.winners.length > 0;
-      g.deckOf = {};
-      g.players.forEach((p, idx) => { g.deckOf[p] = (g.decks[idx] || "").trim(); });
       return g;
-    });
+    })
+    .filter((g) => g.players.length)
+    .map((g, i) => ({ ...g, index: i + 1 }));
 }
 const norm = (s) => (s || "").trim().toLowerCase();
 function parseDate(s) {
@@ -101,10 +85,11 @@ function computeStats(games) {
       const s = per[p];
       const won = g.winners.includes(p);
       s.games++; if (won) s.wins++;
-      const t = deckType(g.deckOf[p]);
+      const d = g.deckOf[p];
+      if (d === "unknown") continue; // deck wasn't recorded: counts toward win rate only
+      const t = deckType(d);
       s.byType[t] ??= { games: 0, wins: 0 };
       s.byType[t].games++; if (won) s.byType[t].wins++;
-      const d = g.deckOf[p];
       if (d && d !== "mad") {
         s.decks[d] ??= { games: 0, wins: 0 };
         s.decks[d].games++; if (won) s.decks[d].wins++;
@@ -494,7 +479,7 @@ function decksFor(player) {
   const out = [];
   for (const g of [...(lastStats?.games || [])].reverse()) {
     const d = g.deckOf[player];
-    if (d && !seen.has(d)) { seen.add(d); out.push(d); }
+    if (d && d !== "unknown" && !seen.has(d)) { seen.add(d); out.push(d); }
   }
   return out;
 }

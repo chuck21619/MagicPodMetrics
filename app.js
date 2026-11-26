@@ -198,6 +198,18 @@ Chart.register({
     }
   },
 });
+// Touch screens never send "mouse left the chart", so a tapped tooltip (and the
+// bar dimming) would stick. Tapping anywhere outside a chart clears them.
+document.addEventListener("pointerdown", (e) => {
+  for (const chart of Object.values(charts)) {
+    if (!chart || e.target === chart.canvas) continue;
+    if (!chart.tooltip?.getActiveElements().length && chart.$hoverIndex == null) continue;
+    chart.$hoverIndex = null;
+    chart.setActiveElements([]);
+    chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+    chart.update("none");
+  }
+});
 // Tooltip placement for bar charts: put the tooltip beside the hovered bar(s)
 // so it never covers them or their value label.
 Chart.Tooltip.positioners.beside = function (items) {

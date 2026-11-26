@@ -230,16 +230,6 @@ function render(stats) {
   const opts = baseOptions();
   const surface = css("--surface-1");
 
-  // Tiles
-  const last = games[games.length - 1];
-  const tiles = [
-    ["Games logged", games.length, `${finished.length} finished · ${nights} game nights`],
-    ["Last game", last.date ? last.date.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : last.dateText, `${last.date ? last.date.getFullYear() + " · " : ""}${last.finished ? `Won by ${last.winners.map(cap).join(" & ")}` : "No winner"}`],
-  ];
-  document.getElementById("tiles").innerHTML = tiles
-    .map(([l, v, d]) => `<div class="tile"><div class="label">${l}</div><div class="value">${v}</div><div class="detail">${d}</div></div>`)
-    .join("");
-
   // Streaks: one row per player with current / longest win / longest loss.
   const plural = (k, word) => `${k} ${k === 1 ? word : word === "loss" ? "losses" : word + "s"}`;
   const recordWin = Math.max(...players.map((p) => streak[p].best));
@@ -448,7 +438,7 @@ async function update() {
       render(lastStats);
     }
     statusEl.classList.remove("error");
-    statusEl.textContent = `${lastStats.games.length} games · checked ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}`;
+    statusEl.textContent = `${lastStats.games.length} games · ${lastStats.nights} game nights · checked ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}`;
   } catch (err) {
     statusEl.classList.add("error");
     statusEl.textContent = `Couldn't update: ${err.message}`;

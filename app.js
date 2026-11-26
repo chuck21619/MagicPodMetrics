@@ -198,6 +198,30 @@ Chart.register({
     }
   },
 });
+// Tooltip placement for bar charts: put the tooltip beside the hovered bar(s)
+// so it never covers them or their value label.
+Chart.Tooltip.positioners.beside = function (items) {
+  if (!items.length) return false;
+  const chart = this.chart;
+  const area = chart.chartArea;
+  const w = this.width || 160;
+  const gap = 10;
+  if (chart.options.indexAxis === "y") {
+    // Horizontal bars: to the right of the value label at the bar's end.
+    const el = items[0].element;
+    const labelRoom = 52;
+    const x = el.x + labelRoom;
+    if (x + w <= chart.width) return { x, y: el.y, xAlign: "left", yAlign: "center" };
+    return { x: el.x, y: el.y + el.height / 2 + 4, xAlign: "right", yAlign: "top" }; // no room: drop below the bar
+  }
+  // Vertical (grouped) bars: beside the whole group, aligned with its top.
+  const left = Math.min(...items.map((i) => i.element.x - i.element.width / 2));
+  const right = Math.max(...items.map((i) => i.element.x + i.element.width / 2));
+  const barTop = Math.min(...items.map((i) => i.element.y));
+  const top = Math.max(area.top, Math.min(barTop, area.bottom - (this.height || 80))); // keep it inside the plot
+  if (right + gap + w <= chart.width) return { x: right + gap, y: top, xAlign: "left", yAlign: "top" };
+  return { x: left - gap, y: top, xAlign: "right", yAlign: "top" };
+};
 const pct = (w, g) => (g ? (100 * w) / g : 0);
 
 function render(stats) {
@@ -239,7 +263,7 @@ function render(stats) {
       ...opts, indexAxis: "y", onHover: dimOnHover,
       plugins: {
         ...opts.plugins, legend: { display: false },
-        tooltip: { ...opts.plugins.tooltip, callbacks: { label: (c) => { const p = sorted[c.dataIndex]; return ` ${c.raw}%  (${per[p].wins} wins / ${per[p].games} games)`; } } },
+        tooltip: { ...opts.plugins.tooltip, position: "beside", callbacks: { label: (c) => { const p = sorted[c.dataIndex]; return ` ${c.raw}%  (${per[p].wins} wins / ${per[p].games} games)`; } } },
       },
       scales: {
         x: { min: 0, max: 100, ticks: { callback: (v) => v + "%" }, grid: { color: css("--grid") } },
@@ -293,7 +317,7 @@ function render(stats) {
         borderColor: surface, borderWidth: { left: 1, right: 1 },
       })),
     },
-    options: { ...opts, onHover: dimOnHover, interaction: { mode: "index", intersect: false }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } },
+    options: { ...opts, plugins: { ...opts.plugins, tooltip: { ...opts.plugins.tooltip, position: "beside" } }, onHover: dimOnHover, interaction: { mode: "index", intersect: false }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } },
   });
 
   // Win rate by deck type
@@ -313,7 +337,7 @@ function render(stats) {
       ...opts, onHover: dimOnHover, interaction: { mode: "index", intersect: false },
       plugins: {
         ...opts.plugins,
-        tooltip: { ...opts.plugins.tooltip, callbacks: { label: (c) => { const p = players[c.datasetIndex]; const s = per[p].byType[types[c.dataIndex]] || { wins: 0, games: 0 }; return ` ${cap(p)}: ${c.raw}% (${s.wins}/${s.games})`; } } },
+        tooltip: { ...opts.plugins.tooltip, position: "beside", callbacks: { label: (c) => { const p = players[c.datasetIndex]; const s = per[p].byType[types[c.dataIndex]] || { wins: 0, games: 0 }; return ` ${cap(p)}: ${c.raw}% (${s.wins}/${s.games})`; } } },
       },
       scales: { x: { grid: { display: false } }, y: { min: 0, max: 100, ticks: { callback: (v) => v + "%" } } },
     },

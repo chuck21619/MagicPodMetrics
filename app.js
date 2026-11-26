@@ -3,7 +3,7 @@ const SHEET_ID = "1_MfWXpThGr1jBHWyuX50s2UDzmNB5iG13GLLXrg7SJg";
 const SHEET_GID = "0";
 const AUTO_REFRESH_MS = 60_000;
 // Paste the Apps Script web app URL here (ends in /exec) to enable "Log a game".
-const APPS_SCRIPT_URL = "";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzaWB3jRP8Wzl5hb5yxrqCiWSBC-h3bIPTOULtarogRVSR5HzmpBe_mOoJ02xL9LJGAbA/exec";
 const ROLLING_WINDOW = 10;
 const NO_WINNER = new Set(["", "dnf", "did not finish", "no one", "none", "draw", "n/a"]);
 

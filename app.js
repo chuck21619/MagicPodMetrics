@@ -151,7 +151,18 @@ function baseOptions() {
     maintainAspectRatio: false,
     animation: { duration: 300 },
     plugins: {
-      legend: { position: "top", align: "start", labels: { boxWidth: 10, boxHeight: 10, useBorderRadius: true, borderRadius: 3 } },
+      legend: {
+        position: "top", align: "start",
+        labels: {
+          boxWidth: 10, boxHeight: 10, useBorderRadius: true, borderRadius: 3,
+          // Legend swatches always show the full color, even while bars are dimmed.
+          generateLabels: (chart) => Chart.defaults.plugins.legend.labels.generateLabels(chart).map((l) => {
+            const base = chart.data.datasets[l.datasetIndex]?.baseColor;
+            if (base) { l.fillStyle = base; l.strokeStyle = base; }
+            return l;
+          }),
+        },
+      },
       tooltip: { padding: 10, cornerRadius: 6, boxPadding: 4 },
     },
   };
@@ -160,6 +171,33 @@ function draw(id, config) {
   charts[id]?.destroy();
   charts[id] = new Chart(document.getElementById(id), config);
 }
+// Hover dimming for bar charts: the hovered bar (or the hovered group, for
+// grouped bars) keeps its color and every other bar fades.
+const DIM_ALPHA = "4d"; // ~30% opacity
+function dim(colorOf) {
+  return (ctx) => {
+    const c = colorOf(ctx);
+    const h = ctx.chart.$hoverIndex;
+    return h == null || ctx.dataIndex === h ? c : c + DIM_ALPHA;
+  };
+}
+function dimOnHover(evt, active, chart) {
+  const idx = active.length ? active[0].index : null;
+  if (idx !== chart.$hoverIndex) {
+    chart.$hoverIndex = idx;
+    chart.update("none");
+  }
+}
+// Un-dim when the mouse leaves the chart.
+Chart.register({
+  id: "dimReset",
+  afterEvent(chart, args) {
+    if (args.event.type === "mouseout" && chart.$hoverIndex != null) {
+      chart.$hoverIndex = null;
+      chart.update("none");
+    }
+  },
+});
 const pct = (w, g) => (g ? (100 * w) / g : 0);
 
 function render(stats) {
@@ -193,12 +231,12 @@ function render(stats) {
       datasets: [{
         label: "Win rate",
         data: sorted.map((p) => +pct(per[p].wins, per[p].games).toFixed(1)),
-        backgroundColor: sorted.map((p) => colorMap[p]), hoverBackgroundColor: sorted.map((p) => colorMap[p]),
+        backgroundColor: dim((ctx) => colorMap[sorted[ctx.dataIndex]]), hoverBackgroundColor: dim((ctx) => colorMap[sorted[ctx.dataIndex]]),
         borderRadius: 4, borderSkipped: "start", barThickness: 28,
       }],
     },
     options: {
-      ...opts, indexAxis: "y",
+      ...opts, indexAxis: "y", onHover: dimOnHover,
       plugins: {
         ...opts.plugins, legend: { display: false },
         tooltip: { ...opts.plugins.tooltip, callbacks: { label: (c) => { const p = sorted[c.dataIndex]; return ` ${c.raw}%  (${per[p].wins} wins / ${per[p].games} games)`; } } },
@@ -251,11 +289,11 @@ function render(stats) {
       datasets: players.map((p) => ({
         label: cap(p),
         data: months.map((m) => finished.filter((g) => g.date && monthKey(g.date) === m && g.winners.includes(p)).length),
-        backgroundColor: colorMap[p], hoverBackgroundColor: colorMap[p], borderRadius: 4, borderSkipped: "start",
+        baseColor: colorMap[p], backgroundColor: dim(() => colorMap[p]), hoverBackgroundColor: dim(() => colorMap[p]), borderRadius: 4, borderSkipped: "start",
         borderColor: surface, borderWidth: { left: 1, right: 1 },
       })),
     },
-    options: { ...opts, interaction: { mode: "index", intersect: false }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } },
+    options: { ...opts, onHover: dimOnHover, interaction: { mode: "index", intersect: false }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } },
   });
 
   // Win rate by deck type
@@ -267,12 +305,12 @@ function render(stats) {
       datasets: players.map((p) => ({
         label: cap(p),
         data: types.map((t) => { const s = per[p].byType[t]; return s ? +pct(s.wins, s.games).toFixed(1) : 0; }),
-        backgroundColor: colorMap[p], hoverBackgroundColor: colorMap[p], borderRadius: 4, borderSkipped: "start",
+        baseColor: colorMap[p], backgroundColor: dim(() => colorMap[p]), hoverBackgroundColor: dim(() => colorMap[p]), borderRadius: 4, borderSkipped: "start",
         borderColor: surface, borderWidth: { left: 1, right: 1 },
       })),
     },
     options: {
-      ...opts, interaction: { mode: "index", intersect: false },
+      ...opts, onHover: dimOnHover, interaction: { mode: "index", intersect: false },
       plugins: {
         ...opts.plugins,
         tooltip: { ...opts.plugins.tooltip, callbacks: { label: (c) => { const p = players[c.datasetIndex]; const s = per[p].byType[types[c.dataIndex]] || { wins: 0, games: 0 }; return ` ${cap(p)}: ${c.raw}% (${s.wins}/${s.games})`; } } },

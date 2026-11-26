@@ -97,16 +97,19 @@ function computeStats(games) {
     }
   }
 
-  // Streaks (consecutive finished games won)
+  // Streaks: consecutive finished games won (best) and lost (worst)
   const streak = {};
   for (const p of players) {
-    let run = 0, best = 0;
+    let run = 0, best = 0, lossRun = 0, worst = 0;
     for (const g of finished) {
       if (!g.players.includes(p)) continue;
-      run = g.winners.includes(p) ? run + 1 : 0;
+      const won = g.winners.includes(p);
+      run = won ? run + 1 : 0;
+      lossRun = won ? 0 : lossRun + 1;
       best = Math.max(best, run);
+      worst = Math.max(worst, lossRun);
     }
-    streak[p] = { current: run, best };
+    streak[p] = { current: run, best, worst };
   }
 
   const nights = new Set(games.map((g) => g.dateText)).size;
@@ -230,14 +233,21 @@ function render(stats) {
   // Tiles
   const leader = [...players].sort((a, b) => pct(per[b].wins, per[b].games) - pct(per[a].wins, per[a].games))[0];
   const hot = [...players].sort((a, b) => streak[b].current - streak[a].current)[0];
-  const bestStreakP = [...players].sort((a, b) => streak[b].best - streak[a].best)[0];
+  // Everyone tied for the top value, e.g. "Chuck & PK".
+  const holders = (key) => {
+    const top = Math.max(...players.map((p) => streak[p][key]));
+    return { top, names: players.filter((p) => streak[p][key] === top).map(cap).join(" & ") };
+  };
+  const longestWin = holders("best");
+  const longestLoss = holders("worst");
   const last = games[games.length - 1];
   const tiles = [
     ["Games logged", games.length, `${finished.length} finished · ${nights} game nights`],
     ["Top win rate", cap(leader), `${pct(per[leader].wins, per[leader].games).toFixed(0)}% (${per[leader].wins} of ${per[leader].games})`],
     ["On a streak", streak[hot].current ? cap(hot) : "Nobody", streak[hot].current ? `${streak[hot].current} win${streak[hot].current === 1 ? "" : "s"} in a row` : "Last game broke it"],
-    ["Longest streak", streak[bestStreakP].best, `${cap(bestStreakP)}`],
-    ["Last game", last.dateText, last.finished ? `Won by ${last.winners.map(cap).join(" & ")}` : "No winner"],
+    ["Longest win streak", longestWin.top, longestWin.names],
+    ["Longest losing streak", longestLoss.top, longestLoss.names],
+    ["Last game", last.date ? last.date.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : last.dateText, `${last.date ? last.date.getFullYear() + " · " : ""}${last.finished ? `Won by ${last.winners.map(cap).join(" & ")}` : "No winner"}`],
   ];
   document.getElementById("tiles").innerHTML = tiles
     .map(([l, v, d]) => `<div class="tile"><div class="label">${l}</div><div class="value">${v}</div><div class="detail">${d}</div></div>`)

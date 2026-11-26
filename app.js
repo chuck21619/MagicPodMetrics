@@ -109,7 +109,7 @@ function computeStats(games) {
       best = Math.max(best, run);
       worst = Math.max(worst, lossRun);
     }
-    streak[p] = { current: run, best, worst };
+    streak[p] = { current: run, currentLoss: lossRun, best, worst };
   }
 
   const nights = new Set(games.map((g) => g.dateText)).size;
@@ -241,10 +241,18 @@ function render(stats) {
   const longestWin = holders("best");
   const longestLoss = holders("worst");
   const last = games[games.length - 1];
+  // "On a streak": the current win streak, plus where everyone else stands.
+  const count = (n, word) => `${n} ${n === 1 ? word : word === "loss" ? "losses" : word + "s"}`;
+  const others = players
+    .filter((p) => p !== hot)
+    .sort((a, b) => streak[b].current - streak[a].current || streak[b].currentLoss - streak[a].currentLoss)
+    .map((p) => `<div class="sub">${esc(cap(p))}: ${streak[p].current ? count(streak[p].current, "win") : count(streak[p].currentLoss, "loss")} in a row</div>`)
+    .join("");
+  const streakDetail = (streak[hot].current ? `${count(streak[hot].current, "win")} in a row` : "Last game broke it") + others;
   const tiles = [
     ["Games logged", games.length, `${finished.length} finished · ${nights} game nights`],
     ["Top win rate", cap(leader), `${pct(per[leader].wins, per[leader].games).toFixed(0)}% (${per[leader].wins} of ${per[leader].games})`],
-    ["On a streak", streak[hot].current ? cap(hot) : "Nobody", streak[hot].current ? `${streak[hot].current} win${streak[hot].current === 1 ? "" : "s"} in a row` : "Last game broke it"],
+    ["On a streak", streak[hot].current ? cap(hot) : "Nobody", streakDetail],
     ["Longest win streak", longestWin.top, longestWin.names],
     ["Longest losing streak", longestLoss.top, longestLoss.names],
     ["Last game", last.date ? last.date.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : last.dateText, `${last.date ? last.date.getFullYear() + " · " : ""}${last.finished ? `Won by ${last.winners.map(cap).join(" & ")}` : "No winner"}`],

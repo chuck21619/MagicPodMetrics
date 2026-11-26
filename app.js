@@ -231,11 +231,9 @@ function render(stats) {
   const surface = css("--surface-1");
 
   // Tiles
-  const leader = [...players].sort((a, b) => pct(per[b].wins, per[b].games) - pct(per[a].wins, per[a].games))[0];
   const last = games[games.length - 1];
   const tiles = [
     ["Games logged", games.length, `${finished.length} finished · ${nights} game nights`],
-    ["Top win rate", cap(leader), `${pct(per[leader].wins, per[leader].games).toFixed(0)}% (${per[leader].wins} of ${per[leader].games})`],
     ["Last game", last.date ? last.date.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : last.dateText, `${last.date ? last.date.getFullYear() + " · " : ""}${last.finished ? `Won by ${last.winners.map(cap).join(" & ")}` : "No winner"}`],
   ];
   document.getElementById("tiles").innerHTML = tiles

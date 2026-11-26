@@ -179,8 +179,8 @@ td.pcell.won {
   color: var(--text-primary); font-weight: 700;
 }
 .tag.nowin-tag { border-style: dashed; display: block; width: fit-content; margin: 4px 0 0; white-space: nowrap; }
-/* Summary tiles: 3 across, stacked on phones. */
-@media (min-width: 520px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* Summary tiles: side by side, stacked on phones. */
+@media (min-width: 520px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tile .value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ---- Streaks section ---- */

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Magic Pod Metrics</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="viz-root">
+    <header class="topbar">
+      <div>
+        <h1>Magic Pod Metrics</h1>
+        <p class="sub" id="status">Loading the game log…</p>
+      </div>
+      <div class="controls">
+        <label class="toggle" title="Re-read the log every 60 seconds">
+          <input type="checkbox" id="autoRefresh" checked /> Auto-update
+        </label>
+        <button id="refreshBtn" type="button">Update now</button>
+      </div>
+    </header>
+
+    <section class="tiles" id="tiles"></section>
+
+    <section class="grid">
+      <article class="card wide">
+        <h2>Win rate by player</h2>
+        <p class="note">Wins ÷ finished games. A shared win counts for each winner.</p>
+        <div class="chart h-sm"><canvas id="winRateChart"></canvas></div>
+      </article>
+
+      <article class="card wide">
+        <h2>Total wins over time</h2>
+        <p class="note">Running total of wins, game by game.</p>
+        <div class="chart"><canvas id="cumulativeChart"></canvas></div>
+      </article>
+
+      <article class="card wide">
+        <h2>Recent form</h2>
+        <p class="note">Win rate over each player's last 10 finished games.</p>
+        <div class="chart"><canvas id="rollingChart"></canvas></div>
+      </article>
+
+      <article class="card">
+        <h2>Wins by month</h2>
+        <div class="chart"><canvas id="monthlyChart"></canvas></div>
+      </article>
+
+      <article class="card">
+        <h2>Win rate by deck type</h2>
+        <p class="note">Own deck vs. precon vs. "mad" games.</p>
+        <div class="chart"><canvas id="deckTypeChart"></canvas></div>
+      </article>
+
+      <article class="card wide">
+        <h2>Most-played commanders</h2>
+        <p class="note">Top decks per player (mad games excluded). Bar = games played, filled part = wins.</p>
+        <div class="commanders" id="commanders"></div>
+      </article>
+
+      <article class="card wide">
+        <h2>Recent games</h2>
+        <div class="table-wrap"><table id="recentTable"></table></div>
+      </article>
+    </section>
+
+    <footer class="foot">
+      Data read live from the pod's Google Sheet log.
+      <a id="sheetLink" target="_blank" rel="noopener">Open the log</a>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

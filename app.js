@@ -284,11 +284,13 @@ function render(stats) {
   // Commanders
   document.getElementById("commanders").innerHTML = players.map((p) => {
     const decks = Object.entries(per[p].decks).sort((a, b) => b[1].games - a[1].games || b[1].wins - a[1].wins).slice(0, 8);
+    const max = decks[0]?.[1].games || 1;
     const rows = decks.map(([name, s]) => `
       <div class="cmd-row" title="${esc(name)}: ${s.wins} wins in ${s.games} games">
         <div class="cmd-name"><span>${esc(name)}</span><span>${s.wins}W / ${s.games}G</span></div>
         <div class="cmd-track">
-          <div class="cmd-wins" style="width:${(100 * s.wins) / s.games}%;background:${colorMap[p]}"></div>
+          <div class="cmd-games" style="width:${(100 * s.games) / max}%;background:${colorMap[p]}"></div>
+          <div class="cmd-wins" style="width:${(100 * s.wins) / max}%;background:${colorMap[p]}"></div>
         </div>
       </div>`).join("");
     return `<div><h3><span class="swatch" style="background:${colorMap[p]}"></span>${cap(p)}</h3>${rows || '<p class="note">No decks yet.</p>'}</div>`;

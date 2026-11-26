@@ -241,14 +241,15 @@ function render(stats) {
   const longestWin = holders("best");
   const longestLoss = holders("worst");
   const last = games[games.length - 1];
-  // "On a streak": the current win streak, plus where everyone else stands.
-  const count = (n, word) => `${n} ${n === 1 ? word : word === "loss" ? "losses" : word + "s"}`;
+  // "On a streak": the current win streak, plus everyone else's run on one line,
+  // e.g. "Dustin lost 2 · Chuck lost 1".
   const others = players
     .filter((p) => p !== hot)
     .sort((a, b) => streak[b].current - streak[a].current || streak[b].currentLoss - streak[a].currentLoss)
-    .map((p) => `<div class="sub">${esc(cap(p))}: ${streak[p].current ? count(streak[p].current, "win") : count(streak[p].currentLoss, "loss")} in a row</div>`)
-    .join("");
-  const streakDetail = (streak[hot].current ? `${count(streak[hot].current, "win")} in a row` : "Last game broke it") + others;
+    .map((p) => `<span class="nowrap">${esc(cap(p))} ${streak[p].current ? `won ${streak[p].current}` : `lost ${streak[p].currentLoss}`}</span>`)
+    .join(" · ");
+  const n = streak[hot].current;
+  const streakDetail = (n ? `${n} win${n === 1 ? "" : "s"} in a row` : "Last game broke it") + (others ? `<div class="sub">${others}</div>` : "");
   const tiles = [
     ["Games logged", games.length, `${finished.length} finished · ${nights} game nights`],
     ["Top win rate", cap(leader), `${pct(per[leader].wins, per[leader].games).toFixed(0)}% (${per[leader].wins} of ${per[leader].games})`],

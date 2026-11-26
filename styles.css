@@ -185,4 +185,4 @@ td.pcell.won {
 @media (min-width: 1280px) { .tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 .tile .value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile .detail .sub { margin-top: 2px; }
-.tile .detail .sub:first-of-type { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+.nowrap { white-space: nowrap; }

@@ -16,6 +16,8 @@
   --series-6: #008300;
   --series-7: #6250d6;
   --series-8: #e34948;
+  --good: #0a7d0a;
+  --bad: #c62828;
 }
 @media (prefers-color-scheme: dark) {
   .viz-root {
@@ -36,6 +38,8 @@
     --series-6: #0ca30c;
     --series-7: #9085e9;
     --series-8: #e66767;
+    --good: #2fb52f;
+    --bad: #ef6b6b;
   }
 }
 
@@ -181,7 +185,10 @@ td.pcell.won {
 .scell { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .scell em { display: none; font-style: normal; font-size: 11px; color: var(--text-muted); }
 .scell.record { color: var(--text-primary); font-weight: 700; }
-.cur { color: var(--text-primary); font-weight: 600; white-space: nowrap; }
+.cur { font-weight: 400; white-space: nowrap; }
+.cur.up { color: var(--good); }
+.cur.down { color: var(--bad); }
+.cur.at-longest { font-weight: 700; } /* current streak ties their longest */
 @media (max-width: 700px) {
   .streak-head { display: none; }
   .streak-row { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 8px; }

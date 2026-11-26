@@ -499,12 +499,12 @@ function renderPlayerRows() {
   });
   wrap.innerHTML = formPlayers.map((p, i) => `
     <div class="player-row" data-player="${esc(p)}">
+      <button type="button" class="icon" title="Remove ${esc(cap(p))}" data-remove="${i}">×</button>
       <span class="swatch" style="background:${colorMap[p] || "var(--text-muted)"}"></span>
       <span class="pname">${esc(cap(p))}</span>
       <input type="text" list="decks-${i}" placeholder="Commander / deck (or mad)" value="${esc(prev[p]?.deck || "")}" required />
       <datalist id="decks-${i}">${["mad", ...decksFor(p).filter((d) => d !== "mad")].map((d) => `<option value="${esc(d)}">`).join("")}</datalist>
       <label class="won"><input type="checkbox" ${prev[p]?.won ? "checked" : ""} /> Won</label>
-      <button type="button" class="icon" title="Remove ${esc(cap(p))}" data-remove="${i}">×</button>
     </div>`).join("");
   wrap.querySelectorAll("[data-remove]").forEach((b) => b.addEventListener("click", () => {
     formPlayers.splice(+b.dataset.remove, 1);

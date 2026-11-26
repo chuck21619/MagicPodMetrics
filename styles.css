@@ -131,7 +131,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.5); }
 .field-row .grow { flex: 1; min-width: 200px; }
 fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin: 0; display: grid; gap: 8px; }
 legend { font-size: 13px; color: var(--text-secondary); padding: 0 4px; }
-.player-row { display: grid; grid-template-columns: auto 64px 1fr auto auto; gap: 8px; align-items: center; }
+.player-row { display: grid; grid-template-columns: auto auto 64px 1fr auto; gap: 8px; align-items: center; }
 .player-row .swatch { margin: 0; }
 .pname { font-weight: 600; font-size: 14px; }
 #logForm label.won { display: flex; flex-direction: row; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; }
@@ -142,7 +142,7 @@ button.icon { padding: 4px 10px; font-size: 16px; line-height: 1; }
 .form-msg.error { color: #d03b3a; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
 @media (max-width: 520px) {
-  .player-row { grid-template-columns: auto 1fr auto auto; }
+  .player-row { grid-template-columns: auto auto 1fr auto; }
   .player-row input[type=text] { grid-column: 1 / -1; grid-row: 2; }
 }
 #logBtn, #submitBtn { background: #e3e1dc; border-color: #d3d1ca; color: #1a1a19; }

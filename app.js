@@ -2,6 +2,8 @@
 const SHEET_ID = "1_MfWXpThGr1jBHWyuX50s2UDzmNB5iG13GLLXrg7SJg";
 const SHEET_GID = "0";
 const AUTO_REFRESH_MS = 60_000;
+// Paste the Apps Script web app URL here (ends in /exec) to enable "Log a game".
+const APPS_SCRIPT_URL = "";
 const ROLLING_WINDOW = 10;
 const NO_WINNER = new Set(["", "dnf", "did not finish", "no one", "none", "draw", "n/a"]);
 
@@ -349,17 +351,12 @@ function valueLabels(fmt) {
 }
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-// ---- Update loop --------------------------------------------------------
+// ---- Update loop (always on) --------------------------------------------
 const statusEl = document.getElementById("status");
-const btn = document.getElementById("refreshBtn");
-const auto = document.getElementById("autoRefresh");
 let lastSignature = null;
 let lastStats = null;
-let timer = null;
 
-async function update({ manual = false } = {}) {
-  btn.disabled = true;
-  if (manual) btn.textContent = "Updating…";
+async function update() {
   try {
     const rows = await fetchSheetRows();
     const sig = JSON.stringify(rows);
@@ -375,22 +372,132 @@ async function update({ manual = false } = {}) {
   } catch (err) {
     statusEl.classList.add("error");
     statusEl.textContent = `Couldn't update: ${err.message}`;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Update now";
   }
 }
 
-function schedule() {
-  clearInterval(timer);
-  if (auto.checked) timer = setInterval(() => { if (!document.hidden) update(); }, AUTO_REFRESH_MS);
-}
-
-btn.addEventListener("click", () => update({ manual: true }));
-auto.addEventListener("change", schedule);
-document.addEventListener("visibilitychange", () => { if (!document.hidden && auto.checked) update(); });
+setInterval(() => { if (!document.hidden) update(); }, AUTO_REFRESH_MS);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) update(); });
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => lastStats && render(lastStats));
 document.getElementById("sheetLink").href = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${SHEET_GID}`;
 
+// ---- Log a game form ----------------------------------------------------
+// Submits to a Google Apps Script web app bound to the sheet (see apps-script/Code.gs).
+const PASS_KEY = "magicpod.passcode";
+const dlg = document.getElementById("logDialog");
+const form = document.getElementById("logForm");
+const formMsg = document.getElementById("formMsg");
+let formPlayers = [];
+
+function todayText() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function openLogForm() {
+  formMsg.textContent = "";
+  formMsg.className = "form-msg";
+  if (!APPS_SCRIPT_URL) {
+    formMsg.textContent = "Logging isn't set up yet: the Apps Script URL is missing from app.js (see README).";
+    formMsg.classList.add("error");
+  }
+  const games = lastStats?.games || [];
+  formPlayers = games.length ? [...games[games.length - 1].players] : [];
+  form.date.value = todayText();
+  form.note.value = "";
+  form.passcode.value = localStorage.getItem(PASS_KEY) || "";
+  document.getElementById("passRow").hidden = !!localStorage.getItem(PASS_KEY);
+  renderPlayerRows();
+  dlg.showModal();
+}
+
+function decksFor(player) {
+  // Most recent first, unique, no "mad"
+  const seen = new Set();
+  const out = [];
+  for (const g of [...(lastStats?.games || [])].reverse()) {
+    const d = g.deckOf[player];
+    if (d && !seen.has(d)) { seen.add(d); out.push(d); }
+  }
+  return out;
+}
+
+function renderPlayerRows() {
+  const wrap = document.getElementById("playerRows");
+  const prev = {};
+  wrap.querySelectorAll(".player-row").forEach((row) => {
+    prev[row.dataset.player] = { deck: row.querySelector("input[type=text]").value, won: row.querySelector("input[type=checkbox]").checked };
+  });
+  wrap.innerHTML = formPlayers.map((p, i) => `
+    <div class="player-row" data-player="${esc(p)}">
+      <span class="swatch" style="background:${colorMap[p] || "var(--text-muted)"}"></span>
+      <span class="pname">${esc(cap(p))}</span>
+      <input type="text" list="decks-${i}" placeholder="Commander / deck (or mad)" value="${esc(prev[p]?.deck || "")}" required />
+      <datalist id="decks-${i}">${["mad", ...decksFor(p).filter((d) => d !== "mad")].map((d) => `<option value="${esc(d)}">`).join("")}</datalist>
+      <label class="won"><input type="checkbox" ${prev[p]?.won ? "checked" : ""} /> Won</label>
+      <button type="button" class="icon" title="Remove ${esc(cap(p))}" data-remove="${i}">×</button>
+    </div>`).join("");
+  wrap.querySelectorAll("[data-remove]").forEach((b) => b.addEventListener("click", () => {
+    formPlayers.splice(+b.dataset.remove, 1);
+    renderPlayerRows();
+  }));
+  wrap.querySelectorAll(".won input").forEach((c) => c.addEventListener("change", () => { if (c.checked) form.noWinner.checked = false; }));
+}
+
+document.getElementById("addPlayerBtn").addEventListener("click", () => {
+  const name = norm(form.newPlayer.value);
+  if (name && !formPlayers.includes(name)) { formPlayers.push(name); renderPlayerRows(); }
+  form.newPlayer.value = "";
+});
+form.newPlayer.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); document.getElementById("addPlayerBtn").click(); } });
+form.noWinner.addEventListener("change", () => {
+  if (form.noWinner.checked) document.querySelectorAll("#playerRows .won input").forEach((c) => { c.checked = false; });
+});
+document.getElementById("logBtn").addEventListener("click", openLogForm);
+document.getElementById("cancelBtn").addEventListener("click", () => dlg.close());
+document.getElementById("changePass").addEventListener("click", (e) => {
+  e.preventDefault();
+  localStorage.removeItem(PASS_KEY);
+  form.passcode.value = "";
+  document.getElementById("passRow").hidden = false;
+});
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const rows = [...document.querySelectorAll("#playerRows .player-row")];
+  const players = rows.map((r) => r.dataset.player);
+  const decks = rows.map((r) => r.querySelector("input[type=text]").value.trim().toLowerCase());
+  const winners = rows.filter((r) => r.querySelector(".won input").checked).map((r) => r.dataset.player);
+  const [y, m, d] = form.date.value.split("-").map(Number);
+  const passcode = form.passcode.value.trim();
+
+  const fail = (msg) => { formMsg.textContent = msg; formMsg.className = "form-msg error"; };
+  if (!APPS_SCRIPT_URL) return fail("Logging isn't set up yet (see README).");
+  if (players.length < 2) return fail("Add at least two players.");
+  if (!winners.length && !form.noWinner.checked) return fail("Tick who won, or tick \"No winner\".");
+  if (!passcode) return fail("Enter the pod passcode.");
+
+  const payload = { passcode, date: `${m}/${d}/${y}`, note: form.note.value.trim(), players, decks, winners };
+  const submitBtn = document.getElementById("submitBtn");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Saving…";
+  try {
+    // text/plain keeps this a "simple" request, so the browser skips the CORS preflight Apps Script can't answer.
+    const res = await fetch(APPS_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+    const out = await res.json();
+    if (!out.ok) throw new Error(out.error || "The sheet rejected the game");
+    localStorage.setItem(PASS_KEY, passcode);
+    dlg.close();
+    statusEl.textContent = "Game logged. Refreshing…";
+    // Google's read endpoint can lag a few seconds behind a write.
+    setTimeout(update, 2000);
+    setTimeout(update, 8000);
+  } catch (err) {
+    if (/passcode/i.test(err.message)) { localStorage.removeItem(PASS_KEY); document.getElementById("passRow").hidden = false; }
+    fail(`Couldn't save: ${err.message}`);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Save game";
+  }
+});
+
 update();
-schedule();

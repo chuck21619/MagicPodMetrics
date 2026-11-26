@@ -15,10 +15,7 @@
         <p class="sub" id="status">Loading the game log…</p>
       </div>
       <div class="controls">
-        <label class="toggle" title="Re-read the log every 60 seconds">
-          <input type="checkbox" id="autoRefresh" checked /> Auto-update
-        </label>
-        <button id="refreshBtn" type="button">Update now</button>
+        <button id="logBtn" type="button" class="primary">+ Log a game</button>
       </div>
     </header>
 
@@ -70,6 +67,37 @@
       Data read live from the pod's Google Sheet log.
       <a id="sheetLink" target="_blank" rel="noopener">Open the log</a>
     </footer>
+
+    <dialog id="logDialog">
+      <form id="logForm" autocomplete="off">
+        <h2>Log a game</h2>
+        <div class="field-row">
+          <label>Date <input type="date" name="date" required /></label>
+          <label class="grow"><span>Note <span class="opt">(optional)</span></span> <input type="text" name="note" placeholder="e.g. strixhaven precons" /></label>
+        </div>
+
+        <fieldset>
+          <legend>Players, decks &amp; winner</legend>
+          <div id="playerRows"></div>
+          <div class="add-player">
+            <input type="text" name="newPlayer" placeholder="Add a player" />
+            <button type="button" id="addPlayerBtn">Add</button>
+          </div>
+          <label class="won no-winner"><input type="checkbox" name="noWinner" /> No winner (didn't finish)</label>
+        </fieldset>
+
+        <div id="passRow" class="field-row">
+          <label class="grow">Pod passcode <input type="password" name="passcode" /></label>
+        </div>
+        <p class="note">Saved on this device after the first game. <a href="#" id="changePass">Change passcode</a></p>
+
+        <p id="formMsg" class="form-msg" role="status"></p>
+        <div class="dialog-actions">
+          <button type="button" id="cancelBtn">Cancel</button>
+          <button type="submit" id="submitBtn" class="primary">Save game</button>
+        </div>
+      </form>
+    </dialog>
   </div>
   <script src="app.js"></script>
 </body>

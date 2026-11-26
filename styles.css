@@ -117,3 +117,38 @@ td.win { font-weight: 700; color: var(--text-primary); }
 
 .foot { max-width: 1200px; margin: 24px auto 0; font-size: 13px; color: var(--text-muted); }
 .foot a { color: var(--text-secondary); }
+
+/* ---- Log a game ---- */
+button.primary { background: var(--series-1); border-color: var(--series-1); color: #fff; }
+button.primary:hover { filter: brightness(1.08); border-color: var(--series-1); }
+dialog {
+  width: min(640px, calc(100vw - 24px)); padding: 0; border: 1px solid var(--border); border-radius: 14px;
+  background: var(--surface-1); color: var(--text-primary);
+}
+dialog::backdrop { background: rgb(0 0 0 / 0.5); }
+#logForm { padding: 20px 22px; display: grid; gap: 14px; }
+#logForm h2 { margin: 0; font-size: 18px; }
+#logForm label { font-size: 13px; color: var(--text-secondary); display: grid; gap: 4px; }
+#logForm .opt { color: var(--text-muted); }
+#logForm input[type=text], #logForm input[type=date], #logForm input[type=password] {
+  font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--page); color: var(--text-primary); min-width: 0;
+}
+.field-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.field-row .grow { flex: 1; min-width: 200px; }
+fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin: 0; display: grid; gap: 8px; }
+legend { font-size: 13px; color: var(--text-secondary); padding: 0 4px; }
+.player-row { display: grid; grid-template-columns: auto 64px 1fr auto auto; gap: 8px; align-items: center; }
+.player-row .swatch { margin: 0; }
+.pname { font-weight: 600; font-size: 14px; }
+#logForm label.won { display: flex; flex-direction: row; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; }
+button.icon { padding: 4px 10px; font-size: 16px; line-height: 1; }
+.add-player { display: flex; gap: 8px; }
+.add-player input { flex: 1; }
+.form-msg { margin: 0; font-size: 13px; min-height: 1em; }
+.form-msg.error { color: #d03b3a; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+@media (max-width: 520px) {
+  .player-row { grid-template-columns: auto 1fr auto auto; }
+  .player-row input[type=text] { grid-column: 1 / -1; grid-row: 2; }
+}

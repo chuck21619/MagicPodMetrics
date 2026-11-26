@@ -193,7 +193,7 @@ function render(stats) {
       datasets: [{
         label: "Win rate",
         data: sorted.map((p) => +pct(per[p].wins, per[p].games).toFixed(1)),
-        backgroundColor: sorted.map((p) => colorMap[p]),
+        backgroundColor: sorted.map((p) => colorMap[p]), hoverBackgroundColor: sorted.map((p) => colorMap[p]),
         borderRadius: 4, borderSkipped: "start", barThickness: 28,
       }],
     },
@@ -251,7 +251,7 @@ function render(stats) {
       datasets: players.map((p) => ({
         label: cap(p),
         data: months.map((m) => finished.filter((g) => g.date && monthKey(g.date) === m && g.winners.includes(p)).length),
-        backgroundColor: colorMap[p], borderRadius: 4, borderSkipped: "start",
+        backgroundColor: colorMap[p], hoverBackgroundColor: colorMap[p], borderRadius: 4, borderSkipped: "start",
         borderColor: surface, borderWidth: { left: 1, right: 1 },
       })),
     },
@@ -267,7 +267,7 @@ function render(stats) {
       datasets: players.map((p) => ({
         label: cap(p),
         data: types.map((t) => { const s = per[p].byType[t]; return s ? +pct(s.wins, s.games).toFixed(1) : 0; }),
-        backgroundColor: colorMap[p], borderRadius: 4, borderSkipped: "start",
+        backgroundColor: colorMap[p], hoverBackgroundColor: colorMap[p], borderRadius: 4, borderSkipped: "start",
         borderColor: surface, borderWidth: { left: 1, right: 1 },
       })),
     },
@@ -309,7 +309,7 @@ function render(stats) {
 
 function lineSet(label, data, color, surface) {
   return {
-    label, data, borderColor: color, backgroundColor: color,
+    label, data, borderColor: color, backgroundColor: color, pointHoverBackgroundColor: color,
     borderWidth: 2, tension: 0.25, spanGaps: true,
     pointRadius: 0, pointHoverRadius: 5, pointHoverBorderColor: surface, pointHoverBorderWidth: 2,
   };

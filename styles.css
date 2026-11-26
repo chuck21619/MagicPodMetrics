@@ -178,6 +178,4 @@ td.pcell.won {
   box-shadow: inset 3px 0 0 var(--pc);
   color: var(--text-primary); font-weight: 700;
 }
-td.pcell.mad:not(.won) { color: var(--text-muted); }
-tr.nowin td.pcell { color: var(--text-muted); }
 .tag.nowin-tag { border-style: dashed; display: block; width: fit-content; margin: 4px 0 0; white-space: nowrap; }

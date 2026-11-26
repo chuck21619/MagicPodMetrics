@@ -380,7 +380,7 @@ function render(stats) {
 function lineSet(label, data, color, surface) {
   return {
     label, data, borderColor: color, backgroundColor: color, pointHoverBackgroundColor: color,
-    borderWidth: 2, tension: 0.25, spanGaps: true,
+    borderWidth: 2, tension: 0.35, spanGaps: true,
     pointRadius: 0, pointHoverRadius: 5, pointHoverBorderColor: surface, pointHoverBorderWidth: 2,
   };
 }

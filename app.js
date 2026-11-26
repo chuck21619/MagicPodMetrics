@@ -448,6 +448,20 @@ async function update() {
 setInterval(() => { if (!document.hidden) update(); }, AUTO_REFRESH_MS);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) update(); });
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => lastStats && render(lastStats));
+// ---- Color palette picker ----
+const PALETTE_KEY = "magicpod.palette";
+const PALETTES = ["jewel", "classic", "bright"];
+function applyPalette(name) {
+  if (!PALETTES.includes(name)) name = "jewel";
+  document.querySelector(".viz-root").dataset.palette = name;
+  document.querySelector(`input[name=palette][value=${name}]`).checked = true;
+}
+applyPalette(localStorage.getItem(PALETTE_KEY));
+document.querySelectorAll("input[name=palette]").forEach((r) => r.addEventListener("change", () => {
+  localStorage.setItem(PALETTE_KEY, r.value);
+  applyPalette(r.value);
+  if (lastStats) render(lastStats);
+}));
 document.getElementById("sheetLink").href = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${SHEET_GID}`;
 
 // ---- Log a game form ----------------------------------------------------

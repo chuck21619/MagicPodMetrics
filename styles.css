@@ -219,3 +219,24 @@ td.pcell.won {
 @media (hover: hover) {
   .info:hover .info-pop { visibility: visible; opacity: 1; }
 }
+
+/* ---- Palette picker ---- */
+/* Each palette sets the first three player colors; validated for colorblind separation in light and dark. */
+.viz-root[data-palette="classic"] { --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; }
+.viz-root[data-palette="bright"]  { --series-1: #2a62d0; --series-2: #d55181; --series-3: #b38700; }
+@media (prefers-color-scheme: dark) {
+  .viz-root[data-palette="classic"] { --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; }
+  .viz-root[data-palette="bright"]  { --series-1: #3d7be8; --series-2: #d55181; --series-3: #b38700; }
+}
+.palette-pick { display: flex; gap: 4px; border: 0; margin: 0; padding: 0; }
+.pal-opt {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-1);
+}
+.pal-opt:hover { border-color: var(--text-muted); }
+.pal-opt input { margin: 0; accent-color: var(--text-secondary); }
+.pal-opt:has(input:checked) { border-color: var(--text-secondary); }
+.pal-dots { display: flex; }
+.pal-dots i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--surface-1); margin-left: -4px; }
+.pal-dots i:first-child { margin-left: 0; }
+@media (max-width: 520px) { .pal-opt { padding: 6px 8px; } .pal-opt input { display: none; } }

@@ -158,3 +158,13 @@ button.icon { padding: 4px 10px; font-size: 16px; line-height: 1; }
   #logBtn, #submitBtn { background: #d6d5d0; border-color: #d6d5d0; color: #1a1a19; }
   #logBtn:hover, #submitBtn:hover { background: #e6e5e1; border-color: #e6e5e1; }
 }
+/* Browser autofill paints saved passwords olive/yellow; keep the normal input look. */
+#logForm input:-webkit-autofill,
+#logForm input:-webkit-autofill:hover,
+#logForm input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-primary);
+  caret-color: var(--text-primary);
+  box-shadow: 0 0 0 1000px var(--page) inset;
+  transition: background-color 9999s ease-out 0s;
+}
+#logForm h2:focus { outline: none; }

@@ -377,10 +377,28 @@ function render(stats) {
     </tr>`).join("") + "</tbody>";
 }
 
+// Gaussian-weighted average of nearby games, for drawing only. The window shrinks
+// symmetrically at the ends so the first and last points stay exact.
+const SMOOTH_RADIUS = 4;
+function smooth(data, r = SMOOTH_RADIUS) {
+  const sigma = r / 2;
+  return data.map((v, i) => {
+    if (v == null) return null;
+    const k = Math.min(r, i, data.length - 1 - i);
+    let sum = 0, wsum = 0;
+    for (let j = i - k; j <= i + k; j++) {
+      if (data[j] == null) continue;
+      const w = Math.exp(-((j - i) ** 2) / (2 * sigma * sigma));
+      sum += w * data[j]; wsum += w;
+    }
+    return sum / wsum;
+  });
+}
 function lineSet(label, data, color, surface) {
   return {
-    label, data, borderColor: color, backgroundColor: color, pointHoverBackgroundColor: color,
-    borderWidth: 2, tension: 0.35, spanGaps: true,
+    label, data: smooth(data), exact: data, // tooltips show the exact values
+    borderColor: color, backgroundColor: color, pointHoverBackgroundColor: color,
+    borderWidth: 2, tension: 0.3, spanGaps: true,
     pointRadius: 0, pointHoverRadius: 5, pointHoverBorderColor: surface, pointHoverBorderWidth: 2,
   };
 }
@@ -392,10 +410,10 @@ function lineOptions(opts, finished, scales, suffix = "") {
       ...opts.plugins,
       tooltip: {
         ...opts.plugins.tooltip,
-        itemSort: (a, b) => (b.raw ?? -1) - (a.raw ?? -1),
+        itemSort: (a, b) => (b.dataset.exact[b.dataIndex] ?? -1) - (a.dataset.exact[a.dataIndex] ?? -1),
         callbacks: {
           title: (items) => { const g = finished[items[0].dataIndex]; return `Game #${g.index} · ${g.dateText} · won by ${g.winners.map(cap).join(" & ")}`; },
-          label: (c) => ` ${c.dataset.label}: ${c.raw ?? "–"}${c.raw != null ? suffix : ""}`,
+          label: (c) => { const v = c.dataset.exact[c.dataIndex]; return ` ${c.dataset.label}: ${v ?? "–"}${v != null ? suffix : ""}`; },
         },
       },
     },

@@ -104,7 +104,6 @@ button:disabled { opacity: 0.6; cursor: progress; }
 .cmd-name span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: capitalize; }
 .cmd-name span:last-child { color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .cmd-track { height: 8px; background: var(--track); border-radius: 4px; margin-top: 3px; position: relative; overflow: hidden; }
-.cmd-games { position: absolute; inset: 0 auto 0 0; border-radius: 4px; opacity: 0.3; }
 .cmd-wins { position: absolute; inset: 0 auto 0 0; border-radius: 4px; }
 
 .table-wrap { overflow-x: auto; margin-top: 12px; }

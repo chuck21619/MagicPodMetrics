@@ -188,7 +188,7 @@ td.pcell.won {
 .cur { font-weight: 400; white-space: nowrap; }
 .cur.up { color: var(--good); }
 .cur.down { color: var(--bad); }
-.cur.at-longest { font-weight: 700; } /* current streak ties their longest */
+.cur.at-longest { font-weight: 700; } /* current streak ties the pod record */
 @media (max-width: 700px) {
   .streak-head { display: none; }
   .streak-row { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 8px; }

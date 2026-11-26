@@ -243,7 +243,7 @@ function render(stats) {
         const up = s.current > 0;
         return `<div class="streak-row" style="--pc:${colorMap[p]}">
           <span class="sname"><span class="swatch" style="background:${colorMap[p]}"></span>${esc(cap(p))}</span>
-          <span class="scell"><em>Current</em><span class="cur ${up ? "up" : "down"} ${(up ? s.current === s.best : s.currentLoss === s.worst) ? "at-longest" : ""}">${up ? "▲" : "▼"} ${up ? plural(s.current, "win") : plural(s.currentLoss, "loss")}</span></span>
+          <span class="scell"><em>Current</em><span class="cur ${up ? "up" : "down"} ${(up ? s.current === recordWin : s.currentLoss === recordLoss) ? "at-longest" : ""}">${up ? "▲" : "▼"} ${up ? plural(s.current, "win") : plural(s.currentLoss, "loss")}</span></span>
           <span class="scell ${s.best === recordWin ? "record" : ""}"><em>Longest win</em>${plural(s.best, "win")}</span>
           <span class="scell ${s.worst === recordLoss ? "record" : ""}"><em>Longest loss</em>${plural(s.worst, "loss")}</span>
         </div>`;

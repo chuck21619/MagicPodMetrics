@@ -516,6 +516,16 @@ form.noWinner.addEventListener("change", () => {
 });
 document.getElementById("logBtn").addEventListener("click", openLogForm);
 document.getElementById("cancelBtn").addEventListener("click", () => dlg.close());
+// Close when clicking the dimmed area outside the form box. Both press and
+// release must be outside, so dragging out of a text box (or using the form's
+// scrollbar) doesn't close it.
+const outsideDialog = (e) => {
+  const r = dlg.getBoundingClientRect();
+  return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+};
+let pressedOutside = false;
+dlg.addEventListener("pointerdown", (e) => { pressedOutside = outsideDialog(e); });
+dlg.addEventListener("click", (e) => { if (pressedOutside && outsideDialog(e)) dlg.close(); pressedOutside = false; });
 document.getElementById("changePass").addEventListener("click", (e) => {
   e.preventDefault();
   localStorage.removeItem(PASS_KEY);

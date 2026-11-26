@@ -373,11 +373,15 @@ function render(stats) {
   // Recent games table
   const recent = games.slice(-15).reverse();
   document.getElementById("recentTable").innerHTML =
-    `<thead><tr><th>#</th><th>Date</th><th>Winner</th>${players.map((p) => `<th><span class="swatch" style="background:${colorMap[p]}"></span>${cap(p)}</th>`).join("")}</tr></thead><tbody>` +
-    recent.map((g) => `<tr>
-      <td>${g.index}</td><td>${esc(g.dateText)}${g.note ? `<span class="tag">${esc(g.note)}</span>` : ""}</td>
-      <td class="win">${g.finished ? g.winners.map(cap).join(" & ") : '<span class="tag">no winner</span>'}</td>
-      ${players.map((p) => `<td class="cmd ${g.winners.includes(p) ? "win" : ""}">${esc(g.deckOf[p] || "—")}</td>`).join("")}
+    `<thead><tr><th>#</th><th>Date</th>${players.map((p) => `<th class="pcol" style="--pc:${colorMap[p]}"><span class="swatch" style="background:${colorMap[p]}"></span>${cap(p)}</th>`).join("")}</tr></thead><tbody>` +
+    recent.map((g) => `<tr class="${g.finished ? "" : "nowin"}">
+      <td class="num">${g.index}</td>
+      <td>${esc(g.dateText)}${g.finished ? "" : '<span class="tag nowin-tag">no winner</span>'}${g.note ? `<span class="tag">${esc(g.note)}</span>` : ""}</td>
+      ${players.map((p) => {
+        const deck = g.deckOf[p] || "—";
+        const won = g.winners.includes(p);
+        return `<td class="cmd pcell ${won ? "won" : ""} ${deck === "mad" ? "mad" : ""}" style="--pc:${colorMap[p]}">${esc(deck)}</td>`;
+      }).join("")}
     </tr>`).join("") + "</tbody>";
 }
 

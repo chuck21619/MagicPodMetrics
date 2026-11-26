@@ -232,35 +232,35 @@ function render(stats) {
 
   // Tiles
   const leader = [...players].sort((a, b) => pct(per[b].wins, per[b].games) - pct(per[a].wins, per[a].games))[0];
-  const hot = [...players].sort((a, b) => streak[b].current - streak[a].current)[0];
-  // Everyone tied for the top value, e.g. "Chuck & PK".
-  const holders = (key) => {
-    const top = Math.max(...players.map((p) => streak[p][key]));
-    return { top, names: players.filter((p) => streak[p][key] === top).map(cap).join(" & ") };
-  };
-  const longestWin = holders("best");
-  const longestLoss = holders("worst");
   const last = games[games.length - 1];
-  // "On a streak": the current win streak, plus everyone else's run on one line,
-  // e.g. "Dustin lost 2 · Chuck lost 1".
-  const others = players
-    .filter((p) => p !== hot)
-    .sort((a, b) => streak[b].current - streak[a].current || streak[b].currentLoss - streak[a].currentLoss)
-    .map((p) => `<span class="nowrap">${esc(cap(p))} ${streak[p].current ? `won ${streak[p].current}` : `lost ${streak[p].currentLoss}`}</span>`)
-    .join(" · ");
-  const n = streak[hot].current;
-  const streakDetail = (n ? `${n} win${n === 1 ? "" : "s"} in a row` : "Last game broke it") + (others ? `<div class="sub">${others}</div>` : "");
   const tiles = [
     ["Games logged", games.length, `${finished.length} finished · ${nights} game nights`],
     ["Top win rate", cap(leader), `${pct(per[leader].wins, per[leader].games).toFixed(0)}% (${per[leader].wins} of ${per[leader].games})`],
-    ["On a streak", streak[hot].current ? cap(hot) : "Nobody", streakDetail],
-    ["Longest win streak", longestWin.top, longestWin.names],
-    ["Longest losing streak", longestLoss.top, longestLoss.names],
     ["Last game", last.date ? last.date.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : last.dateText, `${last.date ? last.date.getFullYear() + " · " : ""}${last.finished ? `Won by ${last.winners.map(cap).join(" & ")}` : "No winner"}`],
   ];
   document.getElementById("tiles").innerHTML = tiles
     .map(([l, v, d]) => `<div class="tile"><div class="label">${l}</div><div class="value">${v}</div><div class="detail">${d}</div></div>`)
     .join("");
+
+  // Streaks: one row per player with current / longest win / longest loss.
+  const plural = (k, word) => `${k} ${k === 1 ? word : word === "loss" ? "losses" : word + "s"}`;
+  const recordWin = Math.max(...players.map((p) => streak[p].best));
+  const recordLoss = Math.max(...players.map((p) => streak[p].worst));
+  document.getElementById("streaks").innerHTML =
+    `<div class="streak-row streak-head"><span>Player</span><span>Current</span><span>Longest win streak</span><span>Longest losing streak</span></div>` +
+    [...players]
+      .sort((a, b) => streak[b].current - streak[a].current || streak[a].currentLoss - streak[b].currentLoss)
+      .map((p) => {
+        const s = streak[p];
+        const up = s.current > 0;
+        return `<div class="streak-row" style="--pc:${colorMap[p]}">
+          <span class="sname"><span class="swatch" style="background:${colorMap[p]}"></span>${esc(cap(p))}</span>
+          <span class="scell"><em>Current</em><span class="cur ${up ? "up" : "down"}">${up ? "▲" : "▼"} ${up ? plural(s.current, "win") : plural(s.currentLoss, "loss")}</span></span>
+          <span class="scell ${s.best === recordWin ? "record" : ""}"><em>Longest win</em>${plural(s.best, "win")}</span>
+          <span class="scell ${s.worst === recordLoss ? "record" : ""}"><em>Longest loss</em>${plural(s.worst, "loss")}</span>
+        </div>`;
+      })
+      .join("");
 
   // Win rate (horizontal bar)
   const sorted = [...players].sort((a, b) => pct(per[b].wins, per[b].games) - pct(per[a].wins, per[a].games));
@@ -593,3 +593,20 @@ form.addEventListener("submit", async (e) => {
 });
 
 update();
+
+// ---- Info buttons -------------------------------------------------------
+// Tap/click toggles the description; tapping elsewhere or Esc closes it.
+// (On devices with a mouse, hovering also shows it — see styles.css.)
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".info-btn");
+  document.querySelectorAll(".info.open").forEach((el) => {
+    if (!btn || el !== btn.parentElement) { el.classList.remove("open"); el.querySelector(".info-btn").setAttribute("aria-expanded", "false"); }
+  });
+  if (btn) {
+    const open = btn.parentElement.classList.toggle("open");
+    btn.setAttribute("aria-expanded", String(open));
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") document.querySelectorAll(".info.open").forEach((el) => el.classList.remove("open"));
+});

@@ -179,10 +179,50 @@ td.pcell.won {
   color: var(--text-primary); font-weight: 700;
 }
 .tag.nowin-tag { border-style: dashed; display: block; width: fit-content; margin: 4px 0 0; white-space: nowrap; }
-/* Summary tiles: even rows (1, 2, 3 or 6 across) so none is left alone on a row. */
-@media (min-width: 520px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 800px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (min-width: 1280px) { .tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+/* Summary tiles: 3 across, stacked on phones. */
+@media (min-width: 520px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .tile .value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tile .detail .sub { margin-top: 2px; }
-.nowrap { white-space: nowrap; }
+
+/* ---- Streaks section ---- */
+.streaks { margin-top: 12px; display: grid; gap: 6px; }
+.streak-row {
+  display: grid; grid-template-columns: minmax(90px, 1fr) repeat(3, minmax(0, 1fr));
+  align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; font-size: 14px;
+  background: color-mix(in srgb, var(--pc, transparent) 8%, transparent);
+}
+.streak-head { background: none; padding-top: 0; padding-bottom: 0; font-size: 12px; color: var(--text-muted); }
+.sname { font-weight: 700; }
+.scell { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.scell em { display: none; font-style: normal; font-size: 11px; color: var(--text-muted); }
+.scell.record { color: var(--text-primary); font-weight: 700; }
+.cur { color: var(--text-primary); font-weight: 600; white-space: nowrap; }
+@media (max-width: 700px) {
+  .streak-head { display: none; }
+  .streak-row { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 8px; }
+  .sname { grid-column: 1 / -1; }
+  .scell em { display: block; }
+}
+
+/* ---- Info buttons next to card titles ---- */
+.card h2 { display: flex; align-items: center; gap: 8px; }
+.card { position: relative; }
+.info { display: inline-flex; } /* popover is positioned against the card so it never leaves it */
+.info-btn {
+  width: 18px; height: 18px; padding: 0; border-radius: 50%;
+  font: italic 600 11px/1 Georgia, "Times New Roman", serif;
+  color: var(--text-muted); background: transparent; border: 1px solid var(--border);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.info-btn:hover, .info.open .info-btn { color: var(--text-primary); border-color: var(--text-muted); }
+.info-pop {
+  position: absolute; top: 44px; left: 14px; z-index: 20;
+  width: max-content; max-width: min(320px, calc(100% - 28px));
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface-1); box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
+  font-size: 13px; font-weight: 400; line-height: 1.4; color: var(--text-secondary);
+  visibility: hidden; opacity: 0; transition: opacity 120ms;
+}
+.info.open .info-pop { visibility: visible; opacity: 1; }
+@media (hover: hover) {
+  .info:hover .info-pop { visibility: visible; opacity: 1; }
+}

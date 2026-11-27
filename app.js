@@ -123,11 +123,9 @@ function computeStats(games) {
 
   // Going first: only finished games where the first player was recorded.
   const firstGames = finished.filter((g) => g.first);
-  const first = { games: firstGames.length, wins: 0, evenOdds: 0, per: {} };
+  const first = { games: firstGames.length, per: {} };
   for (const p of players) first.per[p] = { firstGames: 0, firstWins: 0, otherGames: 0, otherWins: 0 };
   for (const g of firstGames) {
-    if (g.winners.includes(g.first)) first.wins++;
-    first.evenOdds += g.winners.length / g.players.length; // chance the first player wins if seat didn't matter
     for (const p of g.players) {
       const s = first.per[p], won = g.winners.includes(p);
       if (p === g.first) { s.firstGames++; if (won) s.firstWins++; }
@@ -390,11 +388,8 @@ function render(stats) {
   // Going first
   const F = stats.first;
   const fmtRate = (w, g) => (g ? `${Math.round(pct(w, g))}%` : "–");
-  document.getElementById("firstPlayer").innerHTML = !F.games
-    ? `<p class="note">No games with a first player yet. Pick "1st" when you log a game.</p>`
-    : `<p class="first-headline">The player who went first won <strong>${F.wins} of ${F.games}</strong> finished games (${fmtRate(F.wins, F.games)}).
-        If going first didn't matter, you'd expect about ${Math.round(pct(F.evenOdds, F.games))}%.</p>
-      <div class="streak-row streak-head first-row"><span>Player</span><span>Went first</span><span>Win rate going first</span><span>Win rate otherwise</span></div>` +
+  document.getElementById("firstPlayer").innerHTML =
+      `<div class="streak-row streak-head first-row"><span>Player</span><span>Went first</span><span>Win rate going first</span><span>Win rate otherwise</span></div>` +
       players.map((p) => {
         const s = F.per[p];
         return `<div class="streak-row first-row" style="--pc:${colorMap[p]}">

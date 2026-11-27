@@ -242,8 +242,6 @@ td.pcell.won {
 @media (max-width: 520px) { .pal-opt { padding: 6px 8px; } .pal-opt input { display: none; } }
 
 /* ---- Going first ---- */
-.first-headline { margin: 0 0 6px; font-size: 14px; color: var(--text-secondary); }
-.first-headline strong { color: var(--text-primary); }
 .first-row small { color: var(--text-muted); font-size: 12px; }
 .first-tag {
   display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 4px; vertical-align: 1px;

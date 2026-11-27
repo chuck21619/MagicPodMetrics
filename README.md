@@ -38,14 +38,18 @@ stays the same.
 
 One row per game, with a header row and a column per player:
 
-| Date | Winner | Note | chuck | dustin | pk |
-|---|---|---|---|---|---|
-| 3/7/2026 | dustin | | ikra shadiqi | leonardo + april o'neal | roxanne |
-| 7/21/2026 | chuck, pk | | mad | mad | mad |
-| 10/25/2026 | | did not finish | scryfall random | sefris precon | -1/-1 precon |
+| Date | Winner | First | Note | chuck | dustin | pk |
+|---|---|---|---|---|---|---|
+| 3/7/2026 | dustin | | | ikra shadiqi | leonardo + april o'neal | roxanne |
+| 7/21/2026 | chuck, pk | | | mad | mad | mad |
+| 10/25/2026 | | | did not finish | scryfall random | sefris precon | -1/-1 precon |
+| 11/26/2026 | pk | chuck | | kykar | mad | roxanne |
 
 - **Winner**: one name, or several separated by commas for a shared win.
   Blank (or `dnf`, `no one`) = no winner; those games are left out of win rates.
+- **First**: who took the first turn. Blank = not recorded. (Date, Winner, First and
+  Note are found by name, so their order doesn't matter as long as they come before
+  the player columns.)
 - **Player columns**: the deck that player used. Blank = they sat out.
   `unknown` = they played but the deck wasn't recorded.
 - Partners or a second commander go in the same cell, joined with `+`.

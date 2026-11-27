@@ -43,20 +43,29 @@ function fetchSheetRows() {
 //   3/7/2026  | dustin    |      | deck  | deck   | deck
 //   7/21/2026 | chuck, pk |      | mad   | mad    | mad
 // Winner: comma-separated names, or blank for no winner. Blank deck = sat out.
+// Leading columns with these names (any order) are game fields; the rest are players.
+const GAME_FIELDS = ["date", "winner", "first", "note"];
 function parseGames(rows) {
-  if (norm(rows[0]?.[0]) !== "date" || norm(rows[0]?.[1]) !== "winner") {
-    throw new Error("The log's first row should be Date | Winner | Note | players…");
+  const header = (rows[0] || []).map(norm);
+  const col = {};
+  let start = 0;
+  while (start < header.length && GAME_FIELDS.includes(header[start])) col[header[start]] = start++;
+  if (col.date == null || col.winner == null) {
+    throw new Error("The log's first row should be Date | Winner | First | Note | players…");
   }
-  const players = rows[0].slice(3).map(norm);
+  const players = header.slice(start);
+  const cell = (r, k) => (col[k] == null ? "" : (r[col[k]] || "").trim());
   return rows.slice(1)
-    .filter((r) => (r[0] || "").trim())
+    .filter((r) => cell(r, "date"))
     .map((r) => {
-      const g = { date: parseDate(r[0]), dateText: r[0], note: r[2] || "", players: [], deckOf: {} };
+      const g = { date: parseDate(cell(r, "date")), dateText: cell(r, "date"), note: cell(r, "note"), players: [], deckOf: {} };
       players.forEach((p, i) => {
-        const deck = (r[3 + i] || "").trim().toLowerCase();
+        const deck = (r[start + i] || "").trim().toLowerCase();
         if (p && deck) { g.players.push(p); g.deckOf[p] = deck; }
       });
-      g.winners = (r[1] || "").split(/,|&/).map(norm).filter((w) => !NO_WINNER.has(w) && g.players.includes(w));
+      g.winners = cell(r, "winner").split(/,|&/).map(norm).filter((w) => !NO_WINNER.has(w) && g.players.includes(w));
+      const first = norm(cell(r, "first"));
+      g.first = g.players.includes(first) ? first : null;
       g.finished = g.winners.length > 0;
       return g;
     })
@@ -112,8 +121,22 @@ function computeStats(games) {
     streak[p] = { current: run, currentLoss: lossRun, best, worst };
   }
 
+  // Going first: only finished games where the first player was recorded.
+  const firstGames = finished.filter((g) => g.first);
+  const first = { games: firstGames.length, wins: 0, evenOdds: 0, per: {} };
+  for (const p of players) first.per[p] = { firstGames: 0, firstWins: 0, otherGames: 0, otherWins: 0 };
+  for (const g of firstGames) {
+    if (g.winners.includes(g.first)) first.wins++;
+    first.evenOdds += g.winners.length / g.players.length; // chance the first player wins if seat didn't matter
+    for (const p of g.players) {
+      const s = first.per[p], won = g.winners.includes(p);
+      if (p === g.first) { s.firstGames++; if (won) s.firstWins++; }
+      else { s.otherGames++; if (won) s.otherWins++; }
+    }
+  }
+
   const nights = new Set(games.map((g) => g.dateText)).size;
-  return { players, games, finished, per, streak, nights };
+  return { players, games, finished, per, streak, nights, first };
 }
 
 // ---- Rendering ----------------------------------------------------------
@@ -364,6 +387,24 @@ function render(stats) {
 
   // Recent games table
   const recent = games.slice(-15).reverse();
+  // Going first
+  const F = stats.first;
+  const fmtRate = (w, g) => (g ? `${Math.round(pct(w, g))}%` : "–");
+  document.getElementById("firstPlayer").innerHTML = !F.games
+    ? `<p class="note">No games with a first player yet. Pick "1st" when you log a game.</p>`
+    : `<p class="first-headline">The player who went first won <strong>${F.wins} of ${F.games}</strong> finished games (${fmtRate(F.wins, F.games)}).
+        If going first didn't matter, you'd expect about ${Math.round(pct(F.evenOdds, F.games))}%.</p>
+      <div class="streak-row streak-head first-row"><span>Player</span><span>Went first</span><span>Win rate going first</span><span>Win rate otherwise</span></div>` +
+      players.map((p) => {
+        const s = F.per[p];
+        return `<div class="streak-row first-row" style="--pc:${colorMap[p]}">
+          <span class="sname"><span class="swatch" style="background:${colorMap[p]}"></span>${esc(cap(p))}</span>
+          <span class="scell"><em>Went first</em>${s.firstGames} game${s.firstGames === 1 ? "" : "s"}</span>
+          <span class="scell"><em>Going first</em>${fmtRate(s.firstWins, s.firstGames)}${s.firstGames ? ` <small>(${s.firstWins}/${s.firstGames})</small>` : ""}</span>
+          <span class="scell"><em>Otherwise</em>${fmtRate(s.otherWins, s.otherGames)}${s.otherGames ? ` <small>(${s.otherWins}/${s.otherGames})</small>` : ""}</span>
+        </div>`;
+      }).join("");
+
   document.getElementById("recentTable").innerHTML =
     `<thead><tr><th>#</th><th>Date</th>${players.map((p) => `<th class="pcol" style="--pc:${colorMap[p]}"><span class="swatch" style="background:${colorMap[p]}"></span>${cap(p)}</th>`).join("")}</tr></thead><tbody>` +
     recent.map((g) => `<tr class="${g.finished ? "" : "nowin"}">
@@ -372,7 +413,7 @@ function render(stats) {
       ${players.map((p) => {
         const deck = g.deckOf[p] || "—";
         const won = g.winners.includes(p);
-        return `<td class="cmd pcell ${won ? "won" : ""} ${deck === "mad" ? "mad" : ""}" style="--pc:${colorMap[p]}">${esc(deck)}</td>`;
+        return `<td class="cmd pcell ${won ? "won" : ""} ${deck === "mad" ? "mad" : ""}" style="--pc:${colorMap[p]}">${esc(deck)}${g.first === p ? `<span class="first-tag" title="Went first">1st</span>` : ""}</td>`;
       }).join("")}
     </tr>`).join("") + "</tbody>";
 }
@@ -527,7 +568,7 @@ function renderPlayerRows() {
   const wrap = document.getElementById("playerRows");
   const prev = {};
   wrap.querySelectorAll(".player-row").forEach((row) => {
-    prev[row.dataset.player] = { deck: row.querySelector("input[type=text]").value, won: row.querySelector("input[type=checkbox]").checked };
+    prev[row.dataset.player] = { deck: row.querySelector("input[type=text]").value, won: row.querySelector(".won input").checked, first: row.querySelector(".first input").checked };
   });
   wrap.innerHTML = formPlayers.map((p, i) => `
     <div class="player-row" data-player="${esc(p)}">
@@ -536,13 +577,19 @@ function renderPlayerRows() {
       <span class="pname">${esc(cap(p))}</span>
       <input type="text" list="decks-${i}" placeholder="Commander / deck (or mad)" value="${esc(prev[p]?.deck || "")}" required />
       <datalist id="decks-${i}">${["mad", ...decksFor(p).filter((d) => d !== "mad")].map((d) => `<option value="${esc(d)}">`).join("")}</datalist>
+      <label class="won first" title="Took the first turn"><input type="radio" name="first" ${prev[p]?.first ? "checked" : ""} /> 1st</label>
       <label class="won"><input type="checkbox" ${prev[p]?.won ? "checked" : ""} /> Won</label>
     </div>`).join("");
   wrap.querySelectorAll("[data-remove]").forEach((b) => b.addEventListener("click", () => {
     formPlayers.splice(+b.dataset.remove, 1);
     renderPlayerRows();
   }));
-  wrap.querySelectorAll(".won input").forEach((c) => c.addEventListener("change", () => { if (c.checked) form.noWinner.checked = false; }));
+  wrap.querySelectorAll(".won:not(.first) input").forEach((c) => c.addEventListener("change", () => { if (c.checked) form.noWinner.checked = false; }));
+  // "1st" is optional: clicking the chosen one again clears it.
+  wrap.querySelectorAll(".first input").forEach((r) => {
+    r.closest("label").addEventListener("pointerdown", () => { r.dataset.was = r.checked ? "1" : ""; });
+    r.addEventListener("click", () => { if (r.dataset.was) { r.checked = false; r.dataset.was = ""; } });
+  });
 }
 
 document.getElementById("addPlayerBtn").addEventListener("click", () => {
@@ -552,7 +599,7 @@ document.getElementById("addPlayerBtn").addEventListener("click", () => {
 });
 form.newPlayer.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); document.getElementById("addPlayerBtn").click(); } });
 form.noWinner.addEventListener("change", () => {
-  if (form.noWinner.checked) document.querySelectorAll("#playerRows .won input").forEach((c) => { c.checked = false; });
+  if (form.noWinner.checked) document.querySelectorAll("#playerRows .won:not(.first) input").forEach((c) => { c.checked = false; });
 });
 document.getElementById("logBtn").addEventListener("click", openLogForm);
 document.getElementById("cancelBtn").addEventListener("click", () => dlg.close());
@@ -578,7 +625,8 @@ form.addEventListener("submit", async (e) => {
   const rows = [...document.querySelectorAll("#playerRows .player-row")];
   const players = rows.map((r) => r.dataset.player);
   const decks = rows.map((r) => r.querySelector("input[type=text]").value.trim().toLowerCase());
-  const winners = rows.filter((r) => r.querySelector(".won input").checked).map((r) => r.dataset.player);
+  const winners = rows.filter((r) => r.querySelector(".won:not(.first) input").checked).map((r) => r.dataset.player);
+  const first = rows.find((r) => r.querySelector(".first input").checked)?.dataset.player || "";
   const [y, m, d] = form.date.value.split("-").map(Number);
   const passcode = form.passcode.value.trim();
 
@@ -588,7 +636,7 @@ form.addEventListener("submit", async (e) => {
   if (!winners.length && !form.noWinner.checked) return fail("Tick who won, or tick \"No winner\".");
   if (!passcode) return fail("Enter the pod passcode.");
 
-  const payload = { passcode, date: `${m}/${d}/${y}`, note: form.note.value.trim(), players, decks, winners };
+  const payload = { passcode, date: `${m}/${d}/${y}`, note: form.note.value.trim(), players, decks, winners, first };
   const submitBtn = document.getElementById("submitBtn");
   submitBtn.disabled = true;
   submitBtn.textContent = "Saving…";
